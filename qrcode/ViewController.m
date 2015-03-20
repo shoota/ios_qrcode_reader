@@ -18,26 +18,26 @@
     [super viewDidLoad];
     
     // Device
-    self.device = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
+    AVCaptureDevice *device = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
     
     // session
     self.session = [[AVCaptureSession alloc] init];
     
     // Input
-    self.input = [AVCaptureDeviceInput deviceInputWithDevice:self.device error:nil];
-    if (self.input) {
-        [self.session addInput:self.input];
+    AVCaptureDeviceInput *input = [AVCaptureDeviceInput deviceInputWithDevice:device error:nil];
+    if (input) {
+        [self.session addInput:input];
     } else {
         NSLog(@"error");
     }
 
     
     // Output
-    self.output = [[AVCaptureMetadataOutput alloc] init];
-    [self.session addOutput:self.output];
-    [self.output setMetadataObjectsDelegate:self queue:dispatch_get_main_queue()];
-    [self.output setMetadataObjectTypes:@[AVMetadataObjectTypeQRCode, AVMetadataObjectTypeEAN13Code]];
-    NSLog(@"%@", [self.output availableMetadataObjectTypes]);
+    AVCaptureMetadataOutput *output = [[AVCaptureMetadataOutput alloc] init];
+    [self.session addOutput:output];
+    [output setMetadataObjectsDelegate:self queue:dispatch_get_main_queue()];
+    [output setMetadataObjectTypes:@[AVMetadataObjectTypeQRCode, AVMetadataObjectTypeEAN13Code]];
+//    NSLog(@"%@", [output availableMetadataObjectTypes]);
     
     
     // Preview
@@ -58,18 +58,14 @@
 - (void)captureOutput:(AVCaptureOutput *)captureOutput didOutputMetadataObjects:(NSArray *)metadataObjects
        fromConnection:(AVCaptureConnection *)connection
 {
-    // 認識されたメタデータは複数存在することもあるので、１つずつ調べる
+
     for (AVMetadataObject *data in metadataObjects) {
-        // 一次元・二次元コード以外は無視する
-        // ※人物顔の識別結果だった場合など
         if (![data isKindOfClass:[AVMetadataMachineReadableCodeObject class]]) continue;
-        
-        // コード内の文字列を取得
+        // QR code data
         NSString *strValue = [(AVMetadataMachineReadableCodeObject *)data stringValue];
-        
-        // 何のタイプとして認識されたかを確認
+        // type ?
         if ([data.type isEqualToString:AVMetadataObjectTypeQRCode]) {
-            // QRコードの場合、URLとしてmobileSafariを開く
+            // QRコードの場合
             NSURL *url = [NSURL URLWithString:strValue];
             if ([[UIApplication sharedApplication] canOpenURL:url]) {
                 [[UIApplication sharedApplication] openURL:url];
